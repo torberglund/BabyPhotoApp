@@ -2,6 +2,8 @@ plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("kapt")
+    kotlin("plugin.serialization") version "1.9.0"
+
 }
 
 android {
@@ -36,7 +38,8 @@ android {
 dependencies {
     // Material Components (for your XML theme)
     implementation("com.google.android.material:material:1.8.0")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     // Compose UI
     implementation("androidx.compose.ui:ui:1.4.3")
     implementation("androidx.compose.material:material:1.4.3")
