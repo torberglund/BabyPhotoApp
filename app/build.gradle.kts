@@ -1,0 +1,71 @@
+plugins {
+    id("com.android.application")
+    kotlin("android")
+    kotlin("kapt")
+}
+
+
+
+android {
+    namespace = "com.example.babyphotoapp"
+    compileSdk = 33
+
+    defaultConfig {
+        applicationId = "com.example.babyphotoapp"
+        minSdk = 26
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
+
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.7"
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
+
+dependencies {
+    // Compose
+    implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.compose.material:material:1.4.3")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.5.3")
+
+    // CameraX
+    implementation("androidx.camera:camera-core:1.2.0")
+    implementation("androidx.camera:camera-camera2:1.2.0")
+    implementation("androidx.camera:camera-lifecycle:1.2.0")
+    implementation("androidx.camera:camera-view:1.2.0")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.2.2")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+
+    // Lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("com.google.android.material:material:1.6.1")
+}
+kapt {
+    javacOptions {
+        option("-source", "11")
+        option("-target", "11")
+    }
+}
