@@ -38,6 +38,8 @@ android {
 dependencies {
     // Compose
     implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.activity:activity-compose:1.7.2")
+
     implementation("androidx.compose.material:material:1.4.3")
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
@@ -50,6 +52,8 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.2.0")
     implementation("androidx.camera:camera-lifecycle:1.2.0")
     implementation("androidx.camera:camera-view:1.2.0")
+    implementation("androidx.compose.material:material-icons-extended:1.4.3")
+
 
     // Coil
     implementation("io.coil-kt:coil-compose:2.2.2")
