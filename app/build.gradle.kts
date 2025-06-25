@@ -4,8 +4,6 @@ plugins {
     kotlin("kapt")
 }
 
-
-
 android {
     namespace = "com.example.babyphotoapp"
     compileSdk = 33
@@ -16,7 +14,6 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
-
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -26,6 +23,7 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.7"
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -36,36 +34,41 @@ android {
 }
 
 dependencies {
-    // Compose
-    implementation("androidx.compose.ui:ui:1.4.3")
-    implementation("androidx.activity:activity-compose:1.7.2")
+    // Material Components (for your XML theme)
+    implementation("com.google.android.material:material:1.8.0")
 
+    // Compose UI
+    implementation("androidx.compose.ui:ui:1.4.3")
     implementation("androidx.compose.material:material:1.4.3")
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
 
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.5.3")
+    // Compose Foundation (includes LazyVerticalGrid)
+    implementation("androidx.compose.foundation:foundation:1.4.3")
+
+    // Lifecycle Compose (for LocalLifecycleOwner)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+
+    // Activity Compose (permissions launcher)
+    implementation("androidx.activity:activity-compose:1.7.2")
 
     // CameraX
     implementation("androidx.camera:camera-core:1.2.0")
     implementation("androidx.camera:camera-camera2:1.2.0")
     implementation("androidx.camera:camera-lifecycle:1.2.0")
     implementation("androidx.camera:camera-view:1.2.0")
-    implementation("androidx.compose.material:material-icons-extended:1.4.3")
-
 
     // Coil
     implementation("io.coil-kt:coil-compose:2.2.2")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
-    // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("com.google.android.material:material:1.6.1")
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.5.3")
+
+    // Icons
+    implementation("androidx.compose.material:material-icons-extended:1.4.3")
 }
 kapt {
     javacOptions {
