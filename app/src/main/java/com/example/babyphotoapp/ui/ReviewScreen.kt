@@ -56,7 +56,7 @@ fun ReviewScreen() {
         }
     ) {
         LazyVerticalGrid(
-            cells = GridCells.Fixed(3),
+            columns = GridCells.Fixed(3),
             contentPadding = PaddingValues(8.dp),
             modifier = Modifier.fillMaxSize()
         ) {
