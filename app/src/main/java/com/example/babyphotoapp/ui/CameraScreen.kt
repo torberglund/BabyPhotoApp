@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/babyphotoapp/ui/CameraScreen.kt
 package com.example.babyphotoapp.ui
 
 import android.Manifest
@@ -7,7 +8,11 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.*
+import androidx.camera.core.AspectRatio
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
@@ -26,7 +31,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.babyphotoapp.R
-import com.example.babyphotoapp.createMediaStoreEntry
+import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun CameraScreen(
@@ -47,11 +54,13 @@ fun CameraScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted -> hasCameraPermission = granted }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(hasCameraPermission) {
         if (!hasCameraPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
+        } else {
+            // Once we have permission, load today's shots
+            vm.loadToday()
         }
-        vm.loadToday()
     }
 
     if (!hasCameraPermission) {
@@ -61,7 +70,7 @@ fun CameraScreen(
         return
     }
 
-    // 2) Observe if a photo has been taken today
+    // 2) Observe if a photo has already been taken today
     val takenToday by vm.uiState
         .map { it.isTakenToday }
         .collectAsState(initial = false)
@@ -72,26 +81,41 @@ fun CameraScreen(
 
     AndroidView(
         factory = { ctx ->
-            PreviewView(ctx).apply {
-                ProcessCameraProvider.getInstance(ctx).also { future ->
-                    future.addListener({
-                        val cameraProvider = future.get()
-                        val preview = Preview.Builder()
-                            .build()
-                            .also { it.setSurfaceProvider(surfaceProvider) }
-                        imageCapture = ImageCapture.Builder().build()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            CameraSelector.DEFAULT_BACK_CAMERA,
-                            preview,
-                            imageCapture
-                        )
-                    }, ContextCompat.getMainExecutor(ctx))
-                }
-            }
+            val previewView = PreviewView(ctx)
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
+            cameraProviderFuture.addListener({
+                val provider = cameraProviderFuture.get()
+
+                // 1) always unbind before (re-)binding
+                provider.unbindAll()
+
+                // 2) build both with 4:3 aspect
+                val preview = Preview.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                    .build()
+                    .also { it.setSurfaceProvider(previewView.surfaceProvider) }
+
+                imageCapture = ImageCapture.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .build()
+
+                // 3) bind them both at once
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    imageCapture
+                )
+
+            }, ContextCompat.getMainExecutor(ctx))
+
+            previewView
         },
         modifier = Modifier.fillMaxSize()
     )
+
 
     // 4) Overlay: status lamp + shutter button
     Box(Modifier.fillMaxSize()) {
@@ -108,17 +132,36 @@ fun CameraScreen(
                 .padding(16.dp)
         )
 
-        // Shutter
+        // Shutter button
         FloatingActionButton(
             onClick = {
                 val capture = imageCapture ?: return@FloatingActionButton
 
-                // 1) create an empty MediaStore entry
-                val (uri, values) = createMediaStoreEntry(context)
+                // Prepare timestamped file + per-day folder
+                val now = Date()
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(now)
+                val displayName = "IMG_$timestamp.jpg"
+                val datePath = SimpleDateFormat("yyyy/MM/dd", Locale.US).format(now)
 
-                // 2) tell CameraX to write into it
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // Write into DCIM/BabyPhotoApp/yyyy/MM/dd/
+                        put(
+                            MediaStore.Images.Media.RELATIVE_PATH,
+                            "DCIM/BabyPhotoApp/$datePath/"
+                        )
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
+                }
+
                 val outputOptions = ImageCapture.OutputFileOptions
-                    .Builder(context.contentResolver, uri, values)
+                    .Builder(
+                        context.contentResolver,
+                        MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                        contentValues
+                    )
                     .build()
 
                 capture.takePicture(
@@ -126,13 +169,12 @@ fun CameraScreen(
                     ContextCompat.getMainExecutor(context),
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                            // clear pending flag on Q+
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                val update = ContentValues().apply {
-                                    put(MediaStore.Images.Media.IS_PENDING, 0)
-                                }
-                                output.savedUri?.let {
-                                    context.contentResolver.update(it, update, null, null)
+                                output.savedUri?.let { uri ->
+                                    val update = ContentValues().apply {
+                                        put(MediaStore.Images.Media.IS_PENDING, 0)
+                                    }
+                                    context.contentResolver.update(uri, update, null, null)
                                 }
                             }
                             vm.loadToday()
@@ -140,6 +182,7 @@ fun CameraScreen(
                         }
                         override fun onError(exc: ImageCaptureException) {
                             exc.printStackTrace()
+                            // Optionally show a Snackbar or Toast here
                         }
                     }
                 )

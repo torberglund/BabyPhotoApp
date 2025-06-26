@@ -35,6 +35,24 @@ class SyncRepository(private val context: Context) {
         indexFile.writeText(serialized)
     }
 
+    suspend fun syncNow(
+        host: String,
+        port: Int,
+        username: String,
+        password: String,
+        remotePath: String
+    ) {
+        // 1) load today's index & find active shot
+        val todayKey = todayKey()
+        val index = loadIndex()
+        val day = index.days[todayKey] ?: return
+
+        // for each active Shot, locate the file in context.filesDir, then
+        // TODO: open SFTP/WebDAV connection → upload file bytes to `$remotePath/$todayKey/${shot.file}`
+
+        // <-- your sync logic here -->
+    }
+
     /**
      * Mark [fileName] (in “yyyy-MM-dd” = [dateKey]) as active.
      *   • demotes previous active → PASSIVE

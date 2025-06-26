@@ -1,0 +1,52 @@
+# Baby Daily Photo App
+
+An Android app for two parents to each capture one curated, consistently framed photo per day of their newborn, sync to a shared NAS folder, and build a time-lapse movie.
+
+## Purpose
+- Two separate app instances (one for each parent), each using individual NAS credentials
+- Sync all “active” photos to a common folder on user-owned NAS
+- Produce a chronological time-lapse from the daily active shots
+
+## Goals
+- [x] Capture one photo per day with consistent framing
+- [x] Select one “active” photo per day for the time-lapse
+- [ ] Sync active photos to NAS (no vendor lock-in)
+- [ ] Assemble/export time-lapse movie from selected shots
+
+## Feature Checklist
+
+### 1. Capture Flow
+- [x] Launch into CameraX preview (locked 3:4 aspect ratio)
+- [ ] Face-alignment overlay (on-device ML Kit)
+- [x] Status indicator (red/green) for today’s photo
+- [x] Shutter button saves JPEG to `filesDir/photos/YYYY/MM/DD/HHmmss.jpg` and opens Review screen
+
+### 2. Review Screen
+- [x] Display today’s photos in a 3×N grid
+- [x] Tap to mark a photo “active” (defaults to most recent)
+- [x] Filenames suffixed with `-active` or `-passive`
+
+### 3. Navigation & Settings
+- [ ] Calendar picker to browse/select by date
+- [ ] Movie playback UI with configurable FPS
+- [ ] Manual “Sync Now” action
+- [ ] Settings: NAS host, port, credentials, overlay tuning, default FPS
+
+### 4. Movie Playback
+- [ ] Load active photos in date order
+- [ ] Support 1 / 2 / 5 / 10 / 20 / 30 fps
+- [ ] Prefetch images for smooth playback
+- [ ] (Optional) Export to MP4
+
+## Storage & Sync
+- Protocols: primary SFTP, fallback WebDAV
+- Shared folder: `/BabyPhotos/photos/YYYY/MM/DD/` on NAS
+- Metadata file: `/BabyPhotos/index.json`
+- Sync triggers: app launch, photo capture, active selection
+- Conflict policy: latest‐modified wins, with retry/backoff on failure
+- Multi-user support: each parent uses their own NAS credentials but targets the same shared directory
+
+## Architecture
+- **Android**: Kotlin (JVM 11), Jetpack Compose, CameraX, Navigation Compose, Coil
+- **Data layer**: `SyncRepository` ↔ local Room mirror ↔ `index.json`
+- **NAS backend**: user-managed Synology (or any SFTP/WebDAV server)
